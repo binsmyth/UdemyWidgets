@@ -3,9 +3,20 @@ import axios from 'axios';
 //en.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srsearch=programming
 const Search = () => {
     const [term, setTerm] = useState('Programming');
+    const [debouncedTerm, setDebouncedTerm] = useState(term);
     const [results, setResults] = useState([]);
 
     useEffect(() => {
+        const timerId = setTimeout(() => {
+            setDebouncedTerm(term);
+        }, 1000)
+        
+        return () => {
+            clearTimeout(timerId);
+        };
+    }, [term]);
+
+    useEffect(() => {   //If debouncedTerm changes network request otherwise don't
         const search = async () => {
             const {data} = await axios.get('https://en.wikipedia.org/w/api.php', {
                     params: {
@@ -13,26 +24,31 @@ const Search = () => {
                     list: 'search',
                     origin: '*',
                     format: 'json',
-                    srsearch: term,
+                    srsearch: debouncedTerm,
                 }
             });
             setResults(data.query.search);
         };
+        search();
+    },[debouncedTerm]);
 
-        if (term && !results.length) {
-            search();
-        } else {
-            const timeoutId = setTimeout(() => {
-                if (term) {
-                    search();
-                }
-            }, 500);
+    // useEffect(() => {
+        
 
-            return () => {
-                clearTimeout(timeoutId);
-            }
-        }
-    }, [term,results.length]);
+    //     if (term && !results.length) {
+    //         search();
+    //     } else {
+    //         const timeoutId = setTimeout(() => {
+    //             if (term) {
+    //                 search();
+    //             }
+    //         }, 500);
+
+    //         return () => {
+    //             clearTimeout(timeoutId);
+    //         }
+    //     }
+    // }, [term,results.length]);
 
     const renderedResults = results.map((result) => {
         return (
